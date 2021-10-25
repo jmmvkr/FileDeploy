@@ -107,7 +107,7 @@ namespace FileDeploy
             }
             foreach (var f in files)
             {
-                var fi = new DirectoryInfo(f);
+                var fi = new FileInfo(f);
                 var nm = fi.Name;
                 int pos = nm.LastIndexOf('.');
 
