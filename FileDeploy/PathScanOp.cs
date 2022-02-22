@@ -14,40 +14,23 @@ namespace FileDeploy
 
         internal enum EScanPart { None = 0, File = 1, Dir = 2 }
 
-        internal Action<ScanParam> ActScan;
 
+        internal PathScanOp() { }
 
-        internal PathScanOp()
-        {
-            ActScan = PrintScan;
-        }
-
-        void PrintScan(ScanParam sp)
-        {
-            var p = sp.Part;
-            var lv = sp.Level;
-            var rt = sp.PathIn;
-
-            if (EScanPart.File == p)
-            {
-                PrintTab(lv);
-                Console.WriteLine("f{1} {0}", rt, lv);
-            }
-            else if (EScanPart.Dir == p)
-            {
-                PrintTab(lv);
-                Console.WriteLine("d{1} {0}", rt, lv);
-            }
-        }
 
         internal void AddPresetDev()
         {
+            // C#
             AddNameSkip(".git");
             AddNameSkip(".vs");
             AddNameSkip("Debug");
             AddNameSkip("bin");
             AddNameSkip("obj");
             AddExtSkip(".user");
+
+            // VC++
+            AddNameSkip("ipch");
+            AddExtSkip(".sdf");
         }
 
         internal void AddNameSkip(params string[] nmSkip)
@@ -71,71 +54,97 @@ namespace FileDeploy
         }
 
 
-        internal void ScanDir(string rt)
+        internal void ScanDir(string rt, IScan scan)
         {
-            ScanThisDir(rt, 0);
+            ScanParam spRoot = spEmpty;
+            spRoot.PathIn = rt;
+            spRoot.ActScan = scan;
+            ScanDir(rt, spRoot);
         }
 
-        void ScanThisDir(string rt, int lv)
+
+        void ScanDir(string rt, ScanParam spRoot)
         {
-            ScanParam sp;
+            ScanThisDir(rt, 0, ref spRoot);
+        }
+
+        void ScanThisDir(string rt, int lv, ref ScanParam spOuter)
+        {
+            ScanParam sp = spOuter;
             sp.PathIn = rt;
             sp.Level = lv;
             if (Directory.Exists(rt))
             {
                 sp.Part = EScanPart.Dir;
-                ActScan(sp);
+                sp.ActScan.Scan(sp);
             }
             else
             {
                 if (File.Exists(rt))
                 {
                     sp.Part = EScanPart.File;
-                    ActScan(sp);
+                    sp.ActScan.Scan(sp);
                 }
                 return;
             }
 
-            var dirs = Directory.GetDirectories(rt);
-            var files = Directory.GetFiles(rt);
-            foreach (var d in dirs)
-            {
-                var di = new DirectoryInfo(d);
-                if (MapNmSkip.ContainsKey(di.Name)) { continue; }
+            var dirs = Directory.GetDirectories(rt).Where(FilterDir).ToArray();
+            var files = Directory.GetFiles(rt).Where(FilterExt).ToArray();
 
-                ScanThisDir(d, (1 + lv));
+            int lenAccu = dirs.Length + files.Length;
+            int idxAccu = 0;
+            for (int i = 0, len = dirs.Length; i < len;  i++)
+            {
+                var d = dirs[i];
+
+                ScanParam spDir = sp;
+                spDir.AccuLen = lenAccu;
+                spDir.AccuIndex = idxAccu++;
+                ScanThisDir(d, (1 + lv), ref spDir);
             }
-            foreach (var f in files)
+            for (int i = 0, len = files.Length; i < len; i++)
             {
-                var fi = new FileInfo(f);
-                var nm = fi.Name;
-                int pos = nm.LastIndexOf('.');
+                var f = files[i];
 
-                if (pos >= 0)
-                {
-                    var ext = nm.Substring(pos);
-                    if (MapExtSkip.ContainsKey(ext))
-                    {
-                        continue;
-                    }
-                }
-                ScanThisDir(f, (1 + lv));
+                ScanParam spFile = sp;
+                spFile.AccuLen = lenAccu;
+                spFile.AccuIndex = idxAccu++;
+                ScanThisDir(f, (1 + lv), ref spFile);
             }
         }
 
-        void PrintTab(int lv)
+
+        bool FilterDir(string d)
         {
-            for (int i = 0; i < lv; i++)
-            {
-                Console.Write('\t');
-            }
+            var di = new DirectoryInfo(d);
+            if (MapNmSkip.ContainsKey(di.Name)) { return false; }
+            return true;
         }
+
+        bool FilterExt(string f)
+        {
+            var fi = new FileInfo(f);
+            var nm = fi.Name;
+            int pos = nm.LastIndexOf('.');
+            if (pos >= 0)
+            {
+                var ext = nm.Substring(pos);
+                if (MapExtSkip.ContainsKey(ext)) { return false; }
+            }
+            return true;
+        }
+
+
+        static readonly ScanParam spEmpty = new ScanParam();
 
         internal struct ScanParam
         {
             internal EScanPart Part;
             internal string PathIn;
             internal int Level;
+            internal IScan ActScan;
+            internal int AccuLen;
+            internal int AccuIndex;
         }
 
     } // end - class PathScanOp

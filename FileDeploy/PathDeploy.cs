@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace FileDeploy
 {
 
-    internal class PathDeploy
+    internal class PathDeploy : IScan
     {
         internal string DeployTarget = null;
         int posRel = 0;
@@ -16,12 +16,16 @@ namespace FileDeploy
         static internal void RunDeploy(PathScanOp scanObj, string src, string dst)
         {
             PathDeploy pd = new PathDeploy() { DeployTarget = dst };
-            scanObj.ActScan = pd.Deploy;
-            scanObj.ScanDir(src);
+            scanObj.ScanDir(src, pd);
             Console.WriteLine(" -- deploy done --");
         }
 
-        internal void Deploy(PathScanOp.ScanParam sp)
+        void IScan.Scan(PathScanOp.ScanParam sp)
+        {
+            Deploy(sp);
+        }
+
+        void Deploy(PathScanOp.ScanParam sp)
         {
             int lv = sp.Level;
             if (0 == lv)
@@ -47,6 +51,7 @@ namespace FileDeploy
             }
             Console.WriteLine(pthDeploy);
         }
+
     } // end - class PathDeploy
 
 }

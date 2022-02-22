@@ -21,7 +21,12 @@ namespace FileDeploy
     /// </summary>
     public partial class MainWindow : Window
     {
+        [Flags]
+        internal enum Ops { None = 0, Print = 0x1, PrintTree = 0x2, Deploy = 0x4 }
+        internal const Ops AllOp = Ops.Print | Ops.PrintTree | Ops.Deploy;
+
         PathScanOp sc = new PathScanOp();
+
 
         public MainWindow()
         {
@@ -34,12 +39,32 @@ namespace FileDeploy
             sc.AddPresetDev();
         }
 
+
         private void btnDeploy_Click(object sender, RoutedEventArgs e)
         {
-            string rt = @"C:\Users\jmmvk\source\repos\ArduinoFakeUI";
-            string dst = @"x:\ArduinoFakeUI";
+            string rt = @"C:\Users\jmmvk\source\repos\FileDeploy";
+            string nm = new FileInfo(rt).Name;
+            string dst = $@"x:\{nm}";
 
-            PathDeploy.RunDeploy(sc, rt, dst);
+            RunSamples(rt, dst, AllOp);
+        }
+
+        internal void RunSamples(string rt, string dst, Ops ops)
+        {
+            if ((Ops.Print & ops) != Ops.None)
+            {
+                IScan op1 = new PathPrint();
+                sc.ScanDir(rt, op1);
+            }
+            if ((Ops.PrintTree & ops) != Ops.None)
+            {
+                IScan op2 = new PathTreePrinter();
+                sc.ScanDir(rt, op2);
+            }
+            if ((Ops.Deploy & ops) != Ops.None)
+            {
+                PathDeploy.RunDeploy(sc, rt, dst);
+            }
         }
 
     } // end - class MainWindow
