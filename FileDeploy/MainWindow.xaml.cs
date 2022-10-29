@@ -22,7 +22,7 @@ namespace FileDeploy
     public partial class MainWindow : Window
     {
         [Flags]
-        internal enum Ops { None = 0, Print = 0x1, PrintTree = 0x2, Deploy = 0x4 }
+        internal enum Ops { None = 0, Print = 0x1, PrintTree = 0x2, Deploy = 0x4, CsCompile = 0x08 }
         internal const Ops AllOp = Ops.Print | Ops.PrintTree | Ops.Deploy;
 
         PathScanOp sc = new PathScanOp();
@@ -64,6 +64,10 @@ namespace FileDeploy
             if ((Ops.Deploy & ops) != Ops.None)
             {
                 PathDeploy.RunDeploy(sc, rt, dst);
+            }
+            if ((Ops.CsCompile & ops) != Ops.None)
+            {
+                sc.ScanDir(rt, new PathCsCompile());
             }
         }
 
