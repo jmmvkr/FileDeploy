@@ -32,6 +32,7 @@ namespace FileDeploy
         {
             InitializeComponent();
             SysInit();
+            this.Loaded += MainWindow_Loaded;
         }
 
         private void SysInit()
@@ -39,14 +40,36 @@ namespace FileDeploy
             sc.AddPresetDev();
         }
 
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            txtPathSrc.Text = @"C:\Users\jmmvk\source\repos\FileDeploy";
+            txtPathDst.Text = @"X:\";
+        }
 
         private void btnDeploy_Click(object sender, RoutedEventArgs e)
         {
-            string rt = @"C:\Users\jmmvk\source\repos\FileDeploy";
+            string rt = txtPathSrc.Text;
+            string dstRt = txtPathDst.Text.TrimEnd('\\');
             string nm = new FileInfo(rt).Name;
-            string dst = $@"x:\{nm}";
+            string dst = $@"{dstRt}\{nm}";
 
-            RunSamples(rt, dst, AllOp);
+            try
+            {
+                RunSamples(rt, dst, AllOp);
+            }
+            catch (Exception ex)
+            {
+                uiOnError(ex);
+            }
+        }
+
+        void uiOnError(Exception ex)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine(ex.Message);
+            sb.AppendLine();
+            sb.AppendLine(ex.StackTrace);
+            MessageBox.Show(sb.ToString(), ex.GetType().ToString(), MessageBoxButton.OK, MessageBoxImage.Error);
         }
 
         internal void RunSamples(string rt, string dst, Ops ops)

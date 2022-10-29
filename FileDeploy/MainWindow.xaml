@@ -5,8 +5,24 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:FileDeploy"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
-        <Button x:Name="btnDeploy" Content="Deploy" Margin="16" Click="btnDeploy_Click" />
+        Title="File Deploy" Height="450" Width="800">
+    <Grid Margin="16">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="10" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="10" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="12" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <TextBlock Grid.Row="0" VerticalAlignment="Center" Text="From" />
+        <TextBlock Grid.Row="2" VerticalAlignment="Center" Text="To" />
+        <TextBox Grid.Row="0" Grid.Column="2" x:Name="txtPathSrc" Padding="6,4" FontFamily="Consolas" />
+        <TextBox Grid.Row="2" Grid.Column="2" x:Name="txtPathDst" Padding="6,4" FontFamily="Consolas" />
+        <Button Grid.Row="4" Grid.ColumnSpan="3" x:Name="btnDeploy" Content="Deploy" Click="btnDeploy_Click" />
     </Grid>
 </Window>
