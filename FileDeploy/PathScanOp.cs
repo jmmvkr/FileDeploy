@@ -145,6 +145,16 @@ namespace FileDeploy
             return true;
         }
 
+        /// <summary>
+        /// Filter out file created today
+        /// 
+        /// <code>
+        /// PathScanOp sc = new PathScanOp();
+        /// sc.Filter = (ref PathScanOp.ScanParam sp) => { return PathScanOp.InToday(ref sp); };
+        /// sc.ScanDir(rt, new PathTreePrinter());
+        /// </code>
+        /// </summary>
+        /// 
         internal static bool InToday(ref ScanParam sp)
         {
             var today = DateTime.Now.Date;
