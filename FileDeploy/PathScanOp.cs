@@ -9,14 +9,15 @@ namespace FileDeploy
 {
     internal class PathScanOp
     {
+        internal enum EScanPart { None = 0, File = 1, Dir = 2 }
+        internal delegate bool FilterOp(ref ScanParam sp);
+
         Dictionary<string, bool> MapNmSkip = new Dictionary<string, bool>();
         Dictionary<string, bool> MapExtSkip = new Dictionary<string, bool>();
+        internal FilterOp Filter;
 
-        internal enum EScanPart { None = 0, File = 1, Dir = 2 }
 
-
-        internal PathScanOp() { }
-
+        internal PathScanOp() { Filter = AcceptAll; }
 
         internal void AddPresetDev()
         {
@@ -53,6 +54,10 @@ namespace FileDeploy
             }
         }
 
+        public static bool AcceptAll(ref ScanParam sp)
+        {
+            return true;
+        }
 
         internal void ScanDir(string rt, IScan scan)
         {
@@ -76,14 +81,20 @@ namespace FileDeploy
             if (Directory.Exists(rt))
             {
                 sp.Part = EScanPart.Dir;
-                sp.ActScan.Scan(sp);
+                if (Filter(ref sp))
+                {
+                    sp.ActScan.Scan(sp);
+                }
             }
             else
             {
                 if (File.Exists(rt))
                 {
                     sp.Part = EScanPart.File;
-                    sp.ActScan.Scan(sp);
+                    if (Filter(ref sp))
+                    {
+                        sp.ActScan.Scan(sp);
+                    }
                 }
                 return;
             }
@@ -132,6 +143,42 @@ namespace FileDeploy
                 if (MapExtSkip.ContainsKey(ext)) { return false; }
             }
             return true;
+        }
+
+        internal static bool InToday(ref ScanParam sp)
+        {
+            var today = DateTime.Now.Date;
+            return InDayRange(ref sp, today, 1.0);
+        }
+
+        internal static bool InLastDays(ref ScanParam sp, int nDays)
+        {
+            var today = DateTime.Now.Date;
+            var tmEnd = today.AddDays(1.0);
+            var tmStart = tmEnd.AddDays(-nDays);
+            return InDayRange(ref sp, tmStart, tmEnd);
+        }
+
+        internal static bool InDayRange(ref ScanParam sp, DateTime tmStart, double offEnd)
+        {
+            return InDayRange(ref sp, tmStart, tmStart.AddDays(offEnd));
+        }
+
+        internal static bool InDayRange(ref ScanParam sp, DateTime tmStart, DateTime tmEnd)
+        {
+            if (PathScanOp.EScanPart.Dir == sp.Part)
+            {
+                return true;
+            }
+            if (PathScanOp.EScanPart.File == sp.Part)
+            {
+                var tm = File.GetCreationTime(sp.PathIn);
+                if (tmStart <= tm && tm < tmEnd)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
 
